@@ -54,6 +54,18 @@ int is_directory(const char *path) {
     return S_ISDIR(st.st_mode);
 }
 
+void fake_binary_prank() {
+    printf("🌀 Wrong password or corrupted file.\n");
+    printf("🌀 Generating fake binary stream...\n");
+    srand((unsigned)time(NULL));
+    for (int i = 0; i < 1024; i++) {
+        printf("%d", rand() % 2);
+        if (i % 64 == 63) printf("\n");
+        usleep(500);  // slight delay for effect
+    }
+    printf("\n⚠️  File remains encrypted.\n");
+}
+
 int main(void) {
     char selected[NAME_BUFFER];
     char password[NAME_BUFFER];
@@ -102,10 +114,16 @@ int main(void) {
                  "tar -xzf '%s.tar.gz' && rm -f '%s.tar.gz' '%s'",
                  selected, output, password, output, selected, selected);
 
-        if (system(command) == 0) {
+        int ret = system(command);
+
+        if (ret == 0) {
             printf("✅ Decryption & extraction successful: %s\n", output);
+            // delete the .enc file
+            snprintf(command, sizeof(command), "rm -f '%s'", selected);
+            system(command);
+            printf("🧹 Deleted encrypted file: %s\n", selected);
         } else {
-            printf("❌ Decryption or extraction failed.\n");
+            fake_binary_prank();
         }
 
     } else {
@@ -129,8 +147,18 @@ int main(void) {
                      selected, base, base, base, password, selected, base);
         }
 
-        if (system(command) == 0) {
+        int ret = system(command);
+
+        if (ret == 0) {
             printf("✅ Encryption successful: %s.enc\n", base);
+            // delete original file or directory
+            if (is_directory(selected)) {
+                snprintf(command, sizeof(command), "rm -rf '%s'", selected);
+            } else {
+                snprintf(command, sizeof(command), "rm -f '%s'", selected);
+            }
+            system(command);
+            printf("🧹 Deleted original: %s\n", selected);
         } else {
             printf("❌ Encryption failed.\n");
         }
