@@ -4,7 +4,6 @@
 
 # --- Requirements ---
 # Packages needed: fzf, tree, git
-# Install on Arch: sudo pacman -S fzf tree git
 # ---------------------
 
 # Find Git repos in current directory
