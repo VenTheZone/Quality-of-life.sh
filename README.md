@@ -8,7 +8,7 @@ This repository contains a collection of bash scripts designed to improve qualit
 | --------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `cdg.sh`              | Selects a directory via `fzf` and changes the current directory to it.                                      |
 | `cg.sh`               | Selects a file via `fzf` and displays its contents.                                                         |
-| `compress.sh`         | Compresses a video file to a target size using `ffmpeg`.                                                    |
+| `video_compress.sh`   | Compresses a video file to a target size using `ffmpeg`.                                                    |
 | `dl.sh`               | Downloads a video from a given URL using `yt-dlp` through `proxychains`.                                    |
 | `findtext.sh`         | Searches for files in the current directory and subdirectories that contain a given text.                   |
 | `git-clean-branch.sh` | Interactively cleans up local and remote git branches, keeping only `main` or `master`.                       |
