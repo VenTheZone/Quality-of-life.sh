@@ -1,6 +1,6 @@
 # Quality-of-Life Scripts
 
-This repository contains a collection of habdy scripts designed to improve quality of life in the terminal.
+This repository contains a collection of handy scripts designed to improve quality of life in the terminal.
 
 ## Scripts
 
