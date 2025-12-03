@@ -19,6 +19,7 @@ This repository contains a collection of handy scripts designed to improve quali
 | `upload_file_0x0.sh`  | Uploads a file to `0x0.st` and copies the resulting URL to the clipboard.                                   |
 | `upload_url_0x0.sh`   | Uploads a URL to `0x0.st` to shorten it and copies the resulting URL to the clipboard.                      |
 | `yt.sh`               | Downloads a YouTube video, replacing spaces in the filename with underscores.                               |
+| `microfetch.c`        |Ultra-lightweight system information tool designed for embedded systems                                      |
 
 ## Usage
 
@@ -35,3 +36,14 @@ If you add the directory to your `PATH`, you can simply run:
 ```bash
 cg.sh
 ```
+
+## Microfetch
+ Download and compile
+```gcc -Os -static -s microfetch.c -o microfetch```
+
+
+ (Optional) Install system-wide
+```sudo cp microfetch /usr/local/bin/```
+
+ For ARM embedded systems
+```arm-linux-gnueabi-gcc -Os -static -s microfetch.c -o microfetch-arm ```
