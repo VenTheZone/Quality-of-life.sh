@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# qol: List folders and files side by side, newest first
+# shellcheck source=/dev/null
+. "$QOL_LIB"
+
+dir=${1:-.}
+[[ -d $dir ]] || ui_die "not a folder: $dir"
+mode=never bold='' reset=''
+if [[ -t 1 ]]; then mode=always bold=$'\033[1m' reset=$'\033[0m'; fi
+cols=${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}
+
+list() { eza -1 --sort=modified --reverse --color="$mode" --icons="$mode" "$1" -- "$dir"; }
+
+if ((cols < 40)); then
+  list --only-dirs
+  list --only-files
+  exit 0
+fi
+
+# One awk pass: file 1 is the folders, file 2 the files. Width counts characters with the
+# ANSI colour codes stripped; a name too long for its column is cut with … (and loses its colour).
+awk -v cols="$cols" -v bold="$bold" -v reset="$reset" '
+  function plain(s) { gsub(/\033\[[0-9;]*m/, "", s); return s }
+  function fit(s, n,   p) { p = plain(s); return length(p) > n ? substr(p, 1, n - 1) "…" : s }
+  function pad(s, n) { return s sprintf("%" (n - length(plain(s))) "s", "") }
+  FILENAME == ARGV[1] { d[++nd] = $0; next }
+  { f[++nf] = $0 }
+  END {
+    w = int((cols - 3) / 2)
+    printf "%s │ %s\n", pad(bold "Folders (" nd + 0 ")" reset, w), bold "Files (" nf + 0 ")" reset
+    for (i = 1; i <= (nd > nf ? nd : nf); i++) printf "%s │ %s\n", pad(fit(d[i], w), w), fit(f[i], w)
+  }' <(list --only-dirs) <(list --only-files)
