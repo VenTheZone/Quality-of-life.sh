@@ -1,95 +1,77 @@
-# Quality-of-Life Scripts
+# Quality-of-life.sh
 
-This repository contains a collection of handy scripts designed to improve quality of life in the terminal.
+Small terminal commands with fzf pickers, previews and gum prompts, packaged with Nix.
+Type `qol` to list them and pick one.
 
-## Scripts
+## Commands
 
-### File Management & Navigation
-| Script                | Description                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `cdg.sh`              | Selects a directory via `fzf` and changes the current directory to it.                                      |
-| `cg.sh`               | Selects a file via `fzf` and displays its contents.                                                         |
-| `nav.sh`              | Advanced directory navigator with enhanced browsing capabilities.                                          |
-| `locatefile.sh`       | Locates files in the current directory and subdirectories whose names match a given pattern.                  |
-| `findtext.sh`         | Searches for files in the current directory and subdirectories that contain a given text.                   |
-| `ls-cols.sh`          | Displays a two-column directory listing with directories on the left and files on the right, sorted by modification time. |
+| Command | Does |
+|---|---|
+| `cdg` | Jump to a folder with fzf and a tree preview (zsh function) |
+| `cg` | Pick a file with a highlighted preview, then read it |
+| `compress` | Shrink a video to a target size or resolution, picked with a thumbnail preview |
+| `dl` | Download a video or its audio with yt-dlp |
+| `ff` | Find files by name with fd and a preview; prints the picked paths |
+| `ft` | Search text live with ripgrep; Enter opens the match in your editor |
+| `lc` | List folders and files side by side, newest first |
+| `pw` | Generate passwords, pick one, copy it to the clipboard |
+| `qol` | List these commands; pick one to run it |
+| `up` | Upload a file to Litterbox or shorten a URL with TinyURL, and copy the link |
+| `vault` | Encrypt or decrypt a file or folder with a passphrase (age) |
 
-### Video & Media Processing
-| Script                | Description                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `video_compress.sh`   | Compresses a video file to a target size using `ffmpeg`.                                                    |
-| `Video_Quality.sh`    | Converts video resolution with quality presets.                                                            |
-| `dl.sh`               | Downloads a video from a given URL using `yt-dlp` through `proxychains`.                                    |
-| `yt.sh`               | Downloads a YouTube video, replacing spaces in the filename with underscores.                               |
-
-### Development & Git
-| Script                | Description                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `git-clean-branch.sh` | Interactively cleans up local and remote git branches, keeping only `main` or `master`.                       |
-
-### Security & Utilities
-| Script                | Description                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `secure.c`            | A C program that provides secure file encryption and decryption using modern cryptographic libraries.         |
-| `newPW.sh`            | Generates five random passwords and displays them in a sorted list.                                         |
-| `microfetch.c`        | Ultra-lightweight system information tool designed for embedded systems.                                    |
-
-### Network & Cloud Services
-| Script                | Description                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `upload_file_0x0.sh`  | Uploads a file to `0x0.st` and copies the resulting URL to the clipboard.                                   |
-| `upload_url_0x0.sh`   | Uploads a URL to `0x0.st` to shorten it and copies the resulting URL to the clipboard.                      |
-| `sync_notes.sh`       | Synchronizes Obsidian vault with remote storage.                                                            |
-
-### Docker & Container Management
-| Script                | Description                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `open-webui.sh`       | Launches Open WebUI Docker container for AI model management.                                              |
-
-## Usage
-
-To use these scripts, you can either run them directly from the `Quality-of-life` directory, or you can add the `Quality-of-life` directory to your `PATH` to make them accessible from anywhere in your terminal.
-
-For example, to use the `cg.sh` script, you could run:
+## Try one
 
 ```bash
-./Quality-of-life/cg.sh
+nix run github:VenTheZone/Quality-of-life.sh            # qol: the list
+nix run github:VenTheZone/Quality-of-life.sh#compress   # any command by name
 ```
 
-If you add the directory to your `PATH`, you can simply run:
+## Install
 
-```bash
-cg.sh
+With Home Manager (installs every command, the `cdg` zsh function and the `QOL` alias):
+
+```nix
+# flake.nix
+inputs.qol = {
+  url = "github:VenTheZone/Quality-of-life.sh";
+  inputs.nixpkgs.follows = "nixpkgs";
+};
+
+# your Home Manager user
+imports = [ inputs.qol.homeModules.default ];
 ```
 
-## Microfetch
- Download and compile
-```gcc -Os -static -s microfetch.c -o microfetch```
+Without Home Manager, `nix profile install github:VenTheZone/Quality-of-life.sh` installs the commands
+(not `cdg`, which has to be a shell function to change your shell's folder).
 
+## Notes
 
- (Optional) Install system-wide
-```sudo cp microfetch /usr/local/bin/```
+- Pickers, prompts and `pw`, `up`, `vault`, `dl`, `compress` need a terminal. `qol` prints the plain
+  list when its output is piped or you pass `--list`.
+- `compress` writes `<name>.compressed.mp4` next to the video (`.compressed-1.mp4` and so on when
+  that name is taken) and never overwrites. Size targets (10, 25, 50 MB or your own) use two-pass
+  x264 aimed at the size, and a video already under the target is left alone. 1080p, 720p and 480p
+  use CRF 23 and never upscale. It refuses a video whose duration it cannot read. The picker shows
+  a thumbnail (kitty graphics in kitty, chafa elsewhere).
+- `up` asks before anything goes public, and its default answer is no. Litterbox files stay online
+  for 1, 12, 24 or 72 hours (1 GB at most); TinyURL links do not expire. Anyone with a link can
+  open it. The link is copied to the clipboard under Wayland and shown otherwise.
+- `vault` uses age with a passphrase: `vault notes/` makes `notes.tar.age`, `vault notes.tar.age`
+  restores it without overwriting existing files. After encrypting it asks for the passphrase
+  again to compare the archive with the original, and only then offers to delete the original
+  (default no).
+- `pw` takes a length from 8 to 128 (default 20), offers six passwords and shows the one you pick.
+  It copies that one to the clipboard under Wayland.
+- `ft` opens a match as `$EDITOR +LINE -- FILE` (nvim when `$EDITOR` is unset).
 
- For ARM embedded systems
-```arm-linux-gnueabi-gcc -Os -static -s microfetch.c -o microfetch-arm ```
+## Adding a command
 
-## Video Processing Options
+1. Add `bin/<name>`: line 1 `#!/usr/bin/env bash`, line 2 `# qol: <one-line description>`, then
+   `# shellcheck source=/dev/null` and `. "$QOL_LIB"` for the shared helpers in `lib/ui.sh`.
+2. Add its tools to `deps` in `flake.nix`.
+3. Add a row to the table above and, for any logic, `tests/<name>.test.sh`.
+4. `nix flake check` shellchecks every command and runs the tests.
 
-This collection includes two different approaches to video processing:
+## License
 
-- **Size-based compression** (`video_compress.sh`): Compresses videos to a target file size while maintaining quality
-- **Resolution-based conversion** (`Video_Quality.sh`): Changes video resolution with quality presets
-
-Choose the appropriate script based on whether you need to control file size or resolution.
-
-## Security & Encryption
-
-The `secure.c` program provides comprehensive file encryption and decryption capabilities. Compile it with:
-
-```bash
-gcc secure.c -o secure -lssl -lcrypto
-```
-
-## Docker Integration
-
-The `open-webui.sh` script manages Open WebUI containers for local AI model management, requiring Docker to be installed and running.
+MIT, see [LICENSE](LICENSE).
