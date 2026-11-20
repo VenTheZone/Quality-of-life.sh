@@ -51,6 +51,7 @@ ui_preview_image() { # <image> <cols> <rows>: draw an image in an fzf preview pa
 }
 
 ui_preview_file() { # <path>: fzf preview for an image, a folder or a text file (needs eza, bat, chafa)
+  [[ $1 == /* ]] || set -- "./$1" # a name like -x.png must not read as an option to chafa or kitten
   local cols=${FZF_PREVIEW_COLUMNS:-80} rows=${FZF_PREVIEW_LINES:-24}
   case ${1,,} in
     *.png | *.jpg | *.jpeg | *.gif | *.webp | *.bmp) ui_preview_image "$1" "$cols" "$rows" ;;

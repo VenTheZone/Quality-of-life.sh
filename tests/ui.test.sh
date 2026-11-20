@@ -32,6 +32,14 @@ eq "image outside kitty: chafa" "$(ui_preview_file "$T/pic.PNG")" \
   "chafa --format=symbols --size=40x12 --animate=off $T/pic.PNG"
 eq "image in kitty: icat, trailing reset line dropped" "$(KITTY_WINDOW_ID=1 ui_preview_file "$T/pic.PNG")" \
   "kitten icat --clear --transfer-mode=memory --unicode-placeholder --stdin=no --place=40x12@0x0 $T/pic.PNG"$'\e[m'
+touch "$T/-x.png"
+cd "$T"
+# fd prints a relative name like -x.png without ./, which chafa and kitten would take as an option
+eq "dash-named image outside kitty: chafa gets ./" "$(ui_preview_file -x.png)" \
+  "chafa --format=symbols --size=40x12 --animate=off ./-x.png"
+eq "dash-named image in kitty: icat gets ./" "$(KITTY_WINDOW_ID=1 ui_preview_file -x.png)" \
+  "kitten icat --clear --transfer-mode=memory --unicode-placeholder --stdin=no --place=40x12@0x0 ./-x.png"$'\e[m'
+cd "$OLDPWD"
 eq "folder: eza tree" "$(ui_preview_file "$T/folder")" "eza --tree --level=2 --color=always --icons=always -- $T/folder"
 has "text: bat" "$(ui_preview_file "$T/notes.txt")" "bat --color=always"
 
