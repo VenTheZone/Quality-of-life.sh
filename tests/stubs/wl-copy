@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Test stand-in for wl-copy: the "clipboard" is the file $CLIP_FILE.
+cat >"${CLIP_FILE:-/dev/null}"

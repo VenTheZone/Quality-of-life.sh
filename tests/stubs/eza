@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Test stand-in for eza: logs its arguments; --only-dirs/--only-files print the fixture files.
+printf '%s\n' "$*" >>"${EZA_LOG:-/dev/null}"
+case " $* " in
+  *" --only-dirs "*) cat "${EZA_DIRS:?}" ;;
+  *" --only-files "*) cat "${EZA_FILES:?}" ;;
+  *) echo "eza $*" ;;
+esac

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Test stand-in for gum: answers come from env vars, every call is logged to $GUM_LOG.
+printf 'gum %s\n' "$*" >>"${GUM_LOG:-/dev/null}"
+case $1 in
+  confirm) exit "${GUM_CONFIRM:-1}" ;; # 0 = yes; default no
+  choose | input)
+    var=GUM_${1^^}
+    if [[ -z ${!var-} ]]; then
+      echo "stub gum: $var not set" >&2
+      exit 2
+    fi
+    printf '%s\n' "${!var}"
+    ;;
+  style)
+    shift
+    for a; do if [[ $a != -* ]]; then printf '%s\n' "$a"; fi; done
+    ;;
+  *)
+    echo "stub gum: unknown command $1" >&2
+    exit 2
+    ;;
+esac

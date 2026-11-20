@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# qol: List these commands; pick one to run it
+# shellcheck source=/dev/null
+. "$QOL_LIB"
+
+# $QOL_LIST is built by flake.nix from line 2 of every command: "<name><TAB><description>"
+if [[ ${1-} == --list || ! -t 1 ]]; then
+  awk -F '\t' '{ printf "%-10s %s\n", $1, $2 }' "$QOL_LIST"
+  exit 0
+fi
+ui_need_tty
+pick=$(fzf --prompt='qol> ' --no-sort < <(awk -F '\t' '{ printf "%-10s %s\n", $1, $2 }' "$QOL_LIST"))
+cmd=${pick%% *}
+if [[ $cmd == cdg ]]; then
+  ui_ok "cdg changes your shell's folder, so it runs from the shell: type cdg"
+  exit 0
+fi
+exec "$cmd"

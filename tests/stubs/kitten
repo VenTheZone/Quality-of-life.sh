@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Test stand-in for kitten: prints its arguments, then a trailing reset-only line like icat does.
+printf 'kitten %s\n\033[m' "$*"
