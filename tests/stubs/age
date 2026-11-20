@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Test stand-in for age (whose passphrase mode needs a real terminal): "encrypts" by prefixing
+# STUBAGE, "decrypts" by checking and removing it. AGE_FAIL=1 makes every call fail;
+# AGE_CORRUPT=1 makes decryption return garbage.
+if [[ -n ${AGE_FAIL-} ]]; then
+  echo "age: stub failure" >&2
+  exit 1
+fi
+dec=0 in=/dev/stdin out=/dev/stdout
+while (($#)); do
+  case $1 in
+    -p) ;;
+    -d) dec=1 ;;
+    -o)
+      out=$2
+      shift
+      ;;
+    *) in=$1 ;;
+  esac
+  shift
+done
+if ((dec)) && [[ -n ${AGE_CORRUPT-} ]]; then
+  echo "not a tar archive" >"$out"
+elif ((dec)); then
+  [[ $(head -c 7 "$in") == STUBAGE ]] || {
+    echo "age: not a stub archive" >&2
+    exit 1
+  }
+  tail -c +9 "$in" >"$out"
+else
+  { printf 'STUBAGE\n' && cat "$in"; } >"$out"
+fi

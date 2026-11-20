@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# qol: Encrypt or decrypt a file or folder with a passphrase (age)
+# shellcheck source=/dev/null
+. "$QOL_LIB"
+
+[[ $# -eq 1 ]] || ui_die "usage: vault <file or folder>   (a .tar.age file is decrypted)"
+[[ -e $1 ]] || ui_die "no such file or folder: $1"
+src=$(realpath -- "$1")
+parent=$(dirname -- "$src") name=$(basename -- "$src")
+case $src in / | "$HOME") ui_die "refusing to work on $src" ;; esac
+ui_need_tty
+
+if [[ $name == *.tar.age ]]; then
+  # age asks for the passphrase on the terminal; tar -k never overwrites an existing file
+  age -d "$src" | tar -x -k -f - -C "$parent"
+  ui_ok "Decrypted into $parent"
+  if gum confirm --default=false "Delete $name?"; then
+    rm -f -- "$src"
+    ui_ok "Deleted $name"
+  fi
+  exit 0
+fi
+
+out=$parent/$name.tar.age
+[[ ! -e $out ]] || ui_die "$out already exists"
+trap 'rm -f -- "$out.part"' EXIT
+tar -C "$parent" -cf - -- "$name" | age -p -o "$out.part"
+mv -- "$out.part" "$out"
+ui_ok "Encrypted to $out"
+echo "Type the passphrase once more to check the archive." >&2
+age -d "$out" | tar -C "$parent" --compare -f -
+ui_ok "Checked: the archive matches $name"
+if gum confirm --default=false "Delete the original $name?"; then
+  rm -rf -- "$src"
+  ui_ok "Deleted $name"
+fi
