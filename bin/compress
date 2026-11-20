@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+# qol: Shrink a video to a target size or resolution, picked with a thumbnail preview
+# shellcheck source=/dev/null
+. "$QOL_LIB"
+
+# <target MB> <duration s> <has audio 0|1> -> "video_kbps audio_kbps". Pure maths, no ffmpeg.
+# 1 MB = 1 MiB = 8388.608 kbit; 2% is left for the mp4 container. Fails when the audio alone
+# would not fit (video under 1 kbit/s) or the duration is not positive.
+compress_bitrates() {
+  awk -v mb="$1" -v d="$2" -v a="$3" 'BEGIN {
+    if (d <= 0) exit 1
+    total = mb * 8388.608 * 0.98 / d
+    audio = a ? (mb < 10 ? 96 : 128) : 0
+    video = int(total - audio)
+    if (video < 1) exit 1
+    print video, audio
+  }'
+}
+
+# <input> -> <dir>/<name>.compressed.mp4, or <name>.compressed-N.mp4 when that is taken
+compress_outname() {
+  local name=${1##*/} base out n=1
+  base=${1%"$name"}${name%.*}
+  out=$base.compressed.mp4
+  while [[ -e $out ]]; do
+    out=$base.compressed-$n.mp4
+    n=$((n + 1))
+  done
+  printf '%s\n' "$out"
+}
+
+probe() { # <video>: sets codec width height duration size has_audio
+  local k v
+  codec=unknown width=0 height=0 duration=0 size=0 has_audio=0
+  while IFS='=' read -r k v; do
+    case $k in
+      codec_name) codec=$v ;;
+      width) width=$v ;;
+      height) height=$v ;;
+      duration) duration=$v ;;
+      size) size=$v ;;
+    esac
+  done < <(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height:format=duration,size -of default=noprint_wrappers=1 "$1")
+  if [[ -n $(ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 "$1") ]]; then has_audio=1; fi
+}
+
+thumb() { # <video>: print the path of a cached frame at 10% of the duration
+  local dir=${XDG_CACHE_HOME:-$HOME/.cache}/qol/thumbs key
+  key=$(printf '%s|%s' "$1" "$(stat -c '%s|%Y' -- "$1")" | sha256sum)
+  key=${key%% *}
+  if [[ ! -s $dir/$key.jpg ]]; then
+    mkdir -p "$dir"
+    ffmpeg -nostdin -v error -y -ss "$(awk -v d="$duration" 'BEGIN { print d / 10 }')" -i "$1" \
+      -frames:v 1 -vf scale=640:-2 "$dir/$key.part.jpg"
+    mv -- "$dir/$key.part.jpg" "$dir/$key.jpg"
+  fi
+  printf '%s\n' "$dir/$key.jpg"
+}
+
+preview() { # <video>: fzf preview pane, thumbnail on top and the facts under it
+  local f s rows=${FZF_PREVIEW_LINES:-24} cols=${FZF_PREVIEW_COLUMNS:-80}
+  f=$(realpath -- "$1")
+  probe "$f"
+  ui_preview_image "$(thumb "$f")" "$cols" $((rows - 6))
+  s=${duration%.*}
+  printf '\n%-11s %d:%02d\n%-11s %sx%s\n%-11s %s\n%-11s %s\n' Duration $((s / 60)) $((s % 60)) \
+    Resolution "$width" "$height" Codec "$codec" Size "$(ui_size "$size")"
+}
+
+follow() { # <label>: draw a bar from the ffmpeg -progress lines on stdin
+  local k v
+  while IFS='=' read -r k v; do
+    if [[ $k == out_time_us && $v =~ ^[0-9]+$ ]]; then ui_bar $((v * 100 / dur_us)) "$1"; fi
+  done
+  ui_bar 100 "$1"
+  printf '\n' >&2
+}
+
+encode_size() { # <in> <out> <MB>: two-pass libx264 at the bitrate that fills the target
+  local rates v a audio=(-an)
+  rates=$(compress_bitrates "$3" "$duration" "$has_audio") ||
+    ui_die "$3 MB is too small for ${duration%.*} s of video: the audio alone would not fit"
+  read -r v a <<<"$rates"
+  if ((a)); then audio=(-c:a aac -b:a "${a}k"); fi
+  ffmpeg -nostdin -progress pipe:1 -nostats -v error -y -i "$1" -c:v libx264 -preset medium -b:v "${v}k" \
+    -pix_fmt yuv420p -pass 1 -passlogfile "$tmp/pass" -an -f null /dev/null | follow "Pass 1/2"
+  ffmpeg -nostdin -progress pipe:1 -nostats -v error -n -i "$1" -c:v libx264 -preset medium -b:v "${v}k" \
+    -pix_fmt yuv420p -pass 2 -passlogfile "$tmp/pass" "${audio[@]}" -movflags +faststart "$2" | follow "Pass 2/2"
+}
+
+encode_height() { # <in> <out> <height>: CRF 23 at that height (never upscaled), width kept even
+  local audio=(-an)
+  if ((has_audio)); then audio=(-c:a aac -b:a 128k); fi
+  ffmpeg -nostdin -progress pipe:1 -nostats -v error -n -i "$1" -c:v libx264 -preset medium -crf 23 \
+    -vf "scale=-2:'min($3,ih)'" -pix_fmt yuv420p "${audio[@]}" -movflags +faststart "$2" | follow "Encoding"
+}
+
+main() {
+  if [[ ${1-} == --preview ]]; then
+    preview "$2"
+    return
+  fi
+  ui_need_tty
+  local in target mb
+  if (($#)); then
+    in=$1
+  else
+    in=$(fzf --prompt='video> ' --scheme=path --preview "${0@Q} --preview {}" --preview-window=right,60% \
+      < <(fd --type f --max-depth 3 -e mp4 -e mkv -e mov -e webm -e avi -e m4v))
+  fi
+  [[ -f $in ]] || ui_die "no such file: $in"
+  in=$(realpath -- "$in")
+  probe "$in"
+  awk -v d="$duration" 'BEGIN { exit !(d > 0) }' || ui_die "cannot read the duration of ${in##*/}"
+  dur_us=$(awk -v d="$duration" 'BEGIN { printf "%d", d * 1000000 }')
+
+  target=$(gum choose --header "Shrink ${in##*/} ($(ui_size "$size"), ${width}x${height}) to" \
+    "10 MB" "25 MB" "50 MB" "Custom MB" 1080p 720p 480p)
+  if [[ $target == "Custom MB" ]]; then
+    mb=$(gum input --placeholder "Target size in MB")
+    [[ $mb =~ ^[1-9][0-9]*$ ]] || ui_die "not a whole number of MB: $mb"
+    target="$mb MB"
+  fi
+
+  out=$(compress_outname "$in")
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"; if [[ -z ${finished-} ]]; then rm -f -- "$out"; fi' EXIT
+  case $target in
+    *MB)
+      mb=${target% MB}
+      if ((size <= mb * 1048576)); then
+        finished=1
+        ui_ok "${in##*/} is already $(ui_size "$size"), under $target"
+        return
+      fi
+      encode_size "$in" "$out" "$mb"
+      ;;
+    *p) encode_height "$in" "$out" "${target%p}" ;;
+  esac
+  finished=1
+  ui_box "${out##*/}" "$(ui_size "$size") -> $(ui_size "$(stat -c %s -- "$out")")"
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then main "$@"; fi

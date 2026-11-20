@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Test stand-in for ffprobe: video facts from PROBE_* env vars; an audio stream unless PROBE_AUDIO=0.
+case " $* " in
+  *" -select_streams a "*) if [[ ${PROBE_AUDIO:-1} == 1 ]]; then echo 1; fi ;;
+  *) printf 'codec_name=h264\nwidth=1920\nheight=1080\nduration=%s\nsize=%s\n' \
+    "${PROBE_DURATION:-60.000000}" "${PROBE_SIZE:-50000000}" ;;
+esac

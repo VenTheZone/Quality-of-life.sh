@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Test stand-in for ffmpeg: logs its arguments (one call per line), writes 1000 bytes to the
+# output file unless it is /dev/null, and prints ffmpeg -progress lines.
+printf '%s\n' "$*" >>"${FFMPEG_LOG:?}"
+if [[ ${!#} != /dev/null ]]; then head -c 1000 /dev/zero >"${!#}"; fi
+printf 'out_time_us=30000000\nprogress=continue\nout_time_us=60000000\nprogress=end\n'
