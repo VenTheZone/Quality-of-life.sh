@@ -14,6 +14,8 @@ run compress_bitrates 1 600 1
 eq "1 MB, 600 s, audio: refused" "$rc" 1
 run compress_bitrates 10 0 1
 eq "zero duration: refused" "$rc" 1
+run compress_bitrates 10 N/A 1
+eq "non-numeric duration: refused" "$rc" 1
 
 # --- output naming never reuses a name
 mkdir "$T/v"
@@ -79,6 +81,7 @@ has "bad custom size message" "$out" "not a whole number"
 rm -f "$T"/v/in.compressed*
 go "10 MB" PROBE_DURATION=N/A
 eq "unreadable duration exits 1" "$rc" 1
+has "unreadable duration says why" "$out" "cannot read the duration"
 check "unreadable duration leaves no output" test ! -e "$T/v/in.compressed.mp4"
 
 finish

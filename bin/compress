@@ -8,7 +8,7 @@
 # would not fit (video under 1 kbit/s) or the duration is not positive.
 compress_bitrates() {
   awk -v mb="$1" -v d="$2" -v a="$3" 'BEGIN {
-    if (d <= 0) exit 1
+    if (d + 0 <= 0) exit 1
     total = mb * 8388.608 * 0.98 / d
     audio = a ? (mb < 10 ? 96 : 128) : 0
     video = int(total - audio)
@@ -111,7 +111,7 @@ main() {
   [[ -f $in ]] || ui_die "no such file: $in"
   in=$(realpath -- "$in")
   probe "$in"
-  awk -v d="$duration" 'BEGIN { exit !(d > 0) }' || ui_die "cannot read the duration of ${in##*/}"
+  awk -v d="$duration" 'BEGIN { exit !(d + 0 > 0) }' || ui_die "cannot read the duration of ${in##*/}"
   dur_us=$(awk -v d="$duration" 'BEGIN { printf "%d", d * 1000000 }')
 
   target=$(gum choose --header "Shrink ${in##*/} ($(ui_size "$size"), ${width}x${height}) to" \
