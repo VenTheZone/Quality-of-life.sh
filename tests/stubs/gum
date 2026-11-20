@@ -13,7 +13,9 @@ case $1 in
     ;;
   style)
     shift
-    for a; do if [[ $a != -* ]]; then printf '%s\n' "$a"; fi; done
+    given=
+    for a; do if [[ $a != -* ]]; then printf '%s\n' "$a"; given=1; fi; done
+    if [[ -z $given ]]; then cat; fi # no text argument: it comes on stdin, like real gum
     ;;
   *)
     echo "stub gum: unknown command $1" >&2

@@ -26,7 +26,7 @@ fi
 [[ $link =~ ^https://[^[:space:]]+$ ]] || ui_die "unexpected reply: $link"
 if [[ -n ${WAYLAND_DISPLAY-} ]]; then
   printf '%s' "$link" | wl-copy
-  ui_box "$link" "copied to the clipboard"
+  ui_box <<<"$link"$'\n'"copied to the clipboard"
 else
-  ui_box "$link"
+  ui_box <<<"$link"
 fi

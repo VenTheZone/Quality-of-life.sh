@@ -4,7 +4,7 @@
 . "$SRC/tests/lib.sh"
 
 eq "curl is the stub" "$(command -v curl)" "$T/bin/curl"
-export CURL_LOG=$T/curl.log CLIP_FILE=$T/clip WAYLAND_DISPLAY=stub
+export CURL_LOG=$T/curl.log CLIP_FILE=$T/clip GUM_LOG=$T/gum.log WAYLAND_DISPLAY=stub
 go() { # <arg> [env...]: run up with a fresh curl log and clipboard
   : >"$CURL_LOG"
   : >"$CLIP_FILE"
@@ -23,6 +23,7 @@ has "url sent as text" "$sent" $'--data-urlencode\nurl=https://example.com/a b?c
 hasnt "url not sent to Litterbox" "$sent" "litterbox"
 eq "short link copied" "$(cat "$CLIP_FILE")" "https://tinyurl.com/abc"
 has "short link shown" "$out" "https://tinyurl.com/abc"
+hasnt "link never on gum's argv" "$(<"$GUM_LOG")" "https://tinyurl.com/abc"
 
 go "$T/f/note.txt" GUM_CONFIRM=0 GUM_CHOOSE=72h CURL_REPLY=https://litter.catbox.moe/x1.txt
 eq "file exit 0" "$rc" 0
