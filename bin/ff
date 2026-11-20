@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# qol: Find files by name with fd and a preview; prints the picked paths
+# shellcheck source=/dev/null
+. "$QOL_LIB"
+
+if [[ ${1-} == --preview ]]; then
+  ui_preview_file "$2"
+  exit 0
+fi
+ui_need_tty
+fzf --multi --prompt='find> ' --scheme=path --ansi --query "$*" --preview "${0@Q} --preview {}" \
+  < <(fd --type f --hidden --exclude .git --color=always)
