@@ -24,7 +24,7 @@ ui_need_tty() { # fzf and gum draw on /dev/tty: without one, say so and exit 1 (
   { : >/dev/tty; } 2>/dev/null || ui_die "${0##*/} needs a terminal"
 }
 
-ui_box() { # <line>...: rounded box in the accent colour (needs gum)
+ui_box() { # <line>...: rounded box in the accent colour (needs gum); no lines: reads them from stdin
   gum style --border=rounded --padding="0 1" --border-foreground="$QOL_ACCENT" "$@"
 }
 
