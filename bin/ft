@@ -12,4 +12,4 @@ fzf --ansi --disabled --prompt='text> ' --query "$*" \
   --delimiter : \
   --preview 'bat --color=always --style=numbers --highlight-line {2} -- {1}' \
   --preview-window 'right,60%,border-left,+{2}+3/3,~3' \
-  --bind "enter:become:${EDITOR:-nvim} {1} +{2}"
+  --bind "enter:become:${EDITOR:-nvim} +{2} -- {1}"
