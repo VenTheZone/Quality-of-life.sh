@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# qol: Generate passwords, pick one, copy it to the clipboard
+# shellcheck source=/dev/null
+. "$QOL_LIB"
+
+len=${1:-20}
+if ! [[ $len =~ ^[0-9]+$ ]] || ((len < 8 || len > 128)); then ui_die "usage: pw [length 8-128]"; fi
+ui_need_tty
+# 8 KiB of random bytes keep about 2270 of these 71 characters: enough for 6 passwords of 128.
+# No quotes, backslash, space or leading dash, so a password pastes safely anywhere.
+pool=$(LC_ALL=C tr -dc 'A-Za-z0-9@#%^&*_+=' < <(head -c 8192 /dev/urandom))
+pws=()
+for i in 0 1 2 3 4 5; do pws+=("${pool:i*len:len}"); done
+pick=$(gum choose --header "Pick one to copy" < <(printf '%s\n' "${pws[@]}"))
+if [[ -n ${WAYLAND_DISPLAY-} ]]; then
+  printf '%s' "$pick" | wl-copy
+  ui_box "$pick" "copied to the clipboard"
+else
+  ui_box "$pick"
+fi

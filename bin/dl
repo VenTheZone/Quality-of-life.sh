@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# qol: Download a video or its audio with yt-dlp
+# shellcheck source=/dev/null
+. "$QOL_LIB"
+
+ui_need_tty
+url=${1-}
+if [[ -z $url ]]; then url=$(gum input --placeholder "Video URL" --width=80); fi
+[[ $url =~ ^https?:// ]] || ui_die "not a URL: $url"
+mode=$(gum choose --header "Download" "Video" "Audio (opus)" "Audio (mp3)")
+args=(--restrict-filenames -o '%(title)s [%(id)s].%(ext)s')
+case $mode in
+  "Audio (opus)") args+=(-x --audio-format opus) ;;
+  "Audio (mp3)") args+=(-x --audio-format mp3 --audio-quality 0) ;;
+esac
+yt-dlp "${args[@]}" -- "$url"
+ui_ok "Saved in $PWD"

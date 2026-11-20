@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Test stand-in for yt-dlp: logs its arguments (one call per line) and downloads nothing.
+printf '%s\n' "$*" >>"${YTDLP_LOG:?}"
