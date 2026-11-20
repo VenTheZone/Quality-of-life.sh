@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Test stand-in for curl: never touches the network. Logs one argument per line to $CURL_LOG
+# and prints $CURL_REPLY.
+printf '%s\n' "$@" >>"${CURL_LOG:?}"
+printf '%s\n' "${CURL_REPLY:-https://example.invalid/stub}"

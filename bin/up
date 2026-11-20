@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# qol: Upload a file to Litterbox or shorten a URL with TinyURL, and copy the link
+# shellcheck source=/dev/null
+. "$QOL_LIB"
+
+[[ $# -eq 1 ]] || ui_die "usage: up <file | https://url>"
+ui_need_tty
+if [[ $1 =~ ^https?:// ]]; then
+  gum confirm --default=false "Shorten this URL with TinyURL? The short link is public." || ui_die "Cancelled"
+  # --data-urlencode with a name= prefix sends the value as text, never as @file
+  link=$(curl -fsS --get --data-urlencode "url=$1" https://tinyurl.com/api-create.php)
+elif [[ -f $1 ]]; then
+  size=$(stat -c %s -- "$1")
+  ((size <= 1073741824)) || ui_die "Litterbox takes files up to 1 GB; ${1##*/} is $(ui_size "$size")"
+  keep=$(gum choose --header "Keep the file online for" --selected=24h 1h 12h 24h 72h)
+  gum confirm --default=false "Upload ${1##*/} ($(ui_size "$size")) to Litterbox for $keep? Anyone with the link can download it." ||
+    ui_die "Cancelled"
+  # curl -F reads @"name" literally once \ and " inside it are escaped
+  file=${1//\\/\\\\}
+  file=${file//\"/\\\"}
+  link=$(curl -fS -# --form-string reqtype=fileupload --form-string "time=$keep" -F "fileToUpload=@\"$file\"" \
+    https://litterbox.catbox.moe/resources/internals/api.php)
+else
+  ui_die "not a file or URL: $1"
+fi
+[[ $link =~ ^https://[^[:space:]]+$ ]] || ui_die "unexpected reply: $link"
+if [[ -n ${WAYLAND_DISPLAY-} ]]; then
+  printf '%s' "$link" | wl-copy
+  ui_box "$link" "copied to the clipboard"
+else
+  ui_box "$link"
+fi
