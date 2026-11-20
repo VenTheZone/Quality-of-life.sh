@@ -54,7 +54,7 @@ Without Home Manager, `nix profile install github:VenTheZone/Quality-of-life.sh`
   use CRF 23 and never upscale. It refuses a video whose duration it cannot read. The picker shows
   a thumbnail (kitty graphics in kitty, chafa elsewhere).
 - `up` asks before anything goes public, and its default answer is no. Litterbox files stay online
-  for 1, 12, 24 or 72 hours (1 GB at most); TinyURL links do not expire. Anyone with a link can
+  for 1, 12, 24 or 72 hours (1 GB at most). Anyone with a link can
   open it. The link is copied to the clipboard under Wayland and shown otherwise.
 - `vault` uses age with a passphrase: `vault notes/` makes `notes.tar.age`, `vault notes.tar.age`
   restores it without overwriting existing files. After encrypting it asks for the passphrase
@@ -70,7 +70,9 @@ Without Home Manager, `nix profile install github:VenTheZone/Quality-of-life.sh`
    `# shellcheck source=/dev/null` and `. "$QOL_LIB"` for the shared helpers in `lib/ui.sh`.
 2. Add its tools to `deps` in `flake.nix`.
 3. Add a row to the table above and, for any logic, `tests/<name>.test.sh`.
-4. `nix flake check` shellchecks every command and runs the tests.
+4. `git add` the new files, then run `nix flake check`, which shellchecks every command and runs
+   the tests. Flakes only see git-tracked files, so an untracked `bin/<name>` is skipped and the
+   check passes without covering it.
 
 ## License
 
