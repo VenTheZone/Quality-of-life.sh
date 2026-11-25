@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-# Test stand-in for yt-dlp: logs its arguments (one call per line) and downloads nothing.
-printf '%s\n' "$*" >>"${YTDLP_LOG:?}"
-if [[ -n ${YTDLP_OUT-} ]]; then cat "$YTDLP_OUT"; fi # canned output, as yt-dlp would print it
-exit "${YTDLP_RC:-0}"

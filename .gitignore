@@ -1,4 +1,4 @@
 /result
 /result-*
-# a local dl routes file (see README); keep it out of git
-dl-routes
+# kept out of this repo; it lives in a private config
+/bin/dl

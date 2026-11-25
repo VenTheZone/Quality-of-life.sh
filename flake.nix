@@ -1,5 +1,5 @@
 {
-  description = "qol: small, pretty terminal commands (compress, cdg, cg, ft, ff, dl, pw, up, vault, lc)";
+  description = "qol: small, pretty terminal commands (compress, cdg, cg, ft, ff, pw, up, vault, lc)";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
@@ -27,7 +27,6 @@
         cg = [ fd fzf bat eza chafa gnused ];
         ff = [ fd fzf bat eza chafa gnused ];
         ft = [ ripgrep fzf bat ];
-        dl = [ yt-dlp ffmpeg gum gawk coreutils ];
         pw = [ gum wl-clipboard coreutils ];
         up = [ curl gum wl-clipboard coreutils ];
         vault = [ age gnutar gum coreutils ];

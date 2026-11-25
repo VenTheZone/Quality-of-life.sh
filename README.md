@@ -10,7 +10,6 @@ Type `qol` to list them and pick one.
 | `cdg` | Jump to a folder with fzf and a tree preview (zsh function) |
 | `cg` | Pick a file with a highlighted preview, then read it |
 | `compress` | Shrink a video to a target size or resolution, picked with a thumbnail preview |
-| `dl` | Download a video or its audio with yt-dlp |
 | `ff` | Find files by name with fd and a preview; prints the picked paths |
 | `ft` | Search text live with ripgrep; Enter opens the match in your editor |
 | `lc` | List folders and files side by side, newest first |
@@ -46,7 +45,7 @@ Without Home Manager, `nix profile install github:VenTheZone/Quality-of-life.sh`
 
 ## Notes
 
-- Pickers, prompts and `pw`, `up`, `vault`, `dl`, `compress` need a terminal. `qol` prints the plain
+- Pickers, prompts and `pw`, `up`, `vault`, `compress` need a terminal. `qol` prints the plain
   list when its output is piped or you pass `--list`.
 - `compress` writes `<name>.compressed.mp4` next to the video (`.compressed-1.mp4` and so on when
   that name is taken) and never overwrites. Size targets (10, 25, 50 MB or your own) use two-pass
@@ -62,12 +61,6 @@ Without Home Manager, `nix profile install github:VenTheZone/Quality-of-life.sh`
   (default no).
 - `pw` takes a length from 8 to 128 (default 20), offers six passwords and shows the one you pick.
   It copies that one to the clipboard under Wayland.
-- `dl` asks for a quality for video (Best, 1080p, 720p, 480p, 360p; a video with nothing that
-  small gets its best) and shows one status line that redraws in place: a bar, speed, time left
-  and the height, then a ✓ line per finished file. yt-dlp's warnings and errors print above it.
-- `dl` saves in the current folder. To send some sites elsewhere, list them in
-  `~/.config/qol/dl-routes`, one `<domain> <folder>` per line (`#` starts a comment, `~` is your
-  home). A link to that domain or any subdomain of it saves in that folder; the first match wins.
 - `ft` opens a match as `$EDITOR +LINE -- FILE` (nvim when `$EDITOR` is unset).
 
 ## Look
