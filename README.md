@@ -62,6 +62,9 @@ Without Home Manager, `nix profile install github:VenTheZone/Quality-of-life.sh`
   (default no).
 - `pw` takes a length from 8 to 128 (default 20), offers six passwords and shows the one you pick.
   It copies that one to the clipboard under Wayland.
+- `dl` asks for a quality for video (Best, 1080p, 720p, 480p, 360p; a video with nothing that
+  small gets its best) and shows one status line that redraws in place: a bar, speed, time left
+  and the height, then a ✓ line per finished file. yt-dlp's warnings and errors print above it.
 - `dl` saves in the current folder. To send some sites elsewhere, list them in
   `~/.config/qol/dl-routes`, one `<domain> <folder>` per line (`#` starts a comment, `~` is your
   home). A link to that domain or any subdomain of it saves in that folder; the first match wins.

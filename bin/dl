@@ -9,6 +9,18 @@ if [[ -z $url ]]; then url=$(gum input --placeholder "Video URL" --width=80); fi
 [[ $url =~ ^https?:// ]] || ui_die "not a URL: $url"
 mode=$(gum choose --header "Download" "Video" "Audio (opus)" "Audio (mp3)")
 args=(--restrict-filenames -o '%(title)s [%(id)s].%(ext)s')
+case $mode in
+  "Video")
+    quality=$(gum choose --header "Quality" "Best" "1080p" "720p" "480p" "360p")
+    if [[ $quality != Best ]]; then
+      h=${quality%p}
+      # the best at or under that height; a video with nothing that small falls back to its best
+      args+=(-f "bv*[height<=$h]+ba/b[height<=$h]/bv*+ba/b")
+    fi
+    ;;
+  "Audio (opus)") args+=(-x --audio-format opus) ;;
+  "Audio (mp3)") args+=(-x --audio-format mp3 --audio-quality 0) ;;
+esac
 # Optional routes file: "<domain> <folder>" per line; a link to that domain or a subdomain of it
 # saves in the folder. Anything else saves in the current folder.
 host=${url#*://}
@@ -30,9 +42,68 @@ if [[ -r $routes ]]; then
 fi
 mkdir -p -- "$dest"
 args+=(-P "$dest")
-case $mode in
-  "Audio (opus)") args+=(-x --audio-format opus) ;;
-  "Audio (mp3)") args+=(-x --audio-format mp3 --audio-quality 0) ;;
-esac
-yt-dlp "${args[@]}" -- "$url"
+
+# yt-dlp prints machine lines (QOLP progress, QOLM post-processing, QOLF finished file) and the
+# awk below redraws one status line in place from them, so the terminal does not scroll.
+# Anything else yt-dlp says (warnings, errors) is printed above that line.
+args+=(--quiet --progress --newline --no-simulate
+  --progress-template 'download:QOLP %(progress.downloaded_bytes)s %(progress.total_bytes,progress.total_bytes_estimate)s %(progress.speed)s %(progress.eta)s %(info.height)s'
+  --progress-template 'postprocess:QOLM %(progress.postprocessor)s'
+  --print 'after_move:QOLF %(filesize,filesize_approx)s %(filepath)s')
+cols=$({ stty size </dev/tty; } 2>/dev/null | awk '{ print $2 }') || cols=
+trap 'printf "\033[?25h" >&2' EXIT # the status line hides the cursor; always give it back
+rc=0
+yt-dlp "${args[@]}" -- "$url" 2>&1 | awk -v cols="${cols:-80}" -v accent="$QOL_ACCENT" -v ok="$QOL_OK" -v dim="$QOL_DIM" '
+  function human(b, u) {
+    if (b !~ /^[0-9.]+$/) return "?"
+    u = 0
+    while (b >= 1024 && u < 4) { b /= 1024; u++ }
+    return sprintf(u ? "%.1f%s" : "%d%s", b, substr("BKMGT", u + 1, 1) (u ? "iB" : ""))
+  }
+  function clock(s) {
+    if (s !~ /^[0-9.]+$/) return "--:--"
+    s = int(s)
+    return s >= 3600 ? sprintf("%d:%02d:%02d", s / 3600, s % 3600 / 60, s % 60) : sprintf("%d:%02d", s / 60, s % 60)
+  }
+  function draw(s) { printf "\r\033[2K%s", s > "/dev/stderr"; shown = 1 }
+  function clear() { if (shown) { printf "\r\033[2K" > "/dev/stderr"; shown = 0 } }
+  function spinner() { tick++; return "\033[38;5;" accent "m" frames[tick % 10 + 1] "\033[0m" }
+  BEGIN {
+    split("⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏", frames, " ")
+    width = cols - 48 # room left for the text around the bar
+    if (width > 30) width = 30
+    printf "\033[?25l" > "/dev/stderr"
+  }
+  $1 == "QOLP" {
+    have = $3 ~ /^[0-9.]+$/ && $3 > 0
+    pct = have ? int($2 * 100 / $3) : 0
+    if (pct > 100) pct = 100
+    bar = ""
+    if (have && width >= 5) {
+      full = int(pct * width / 100)
+      bar = "▕\033[38;5;" accent "m"
+      for (i = 0; i < full; i++) bar = bar "█"
+      bar = bar "\033[38;5;" dim "m"
+      for (; i < width; i++) bar = bar "░"
+      bar = bar "\033[0m▏ "
+    }
+    tag = $6 ~ /^[0-9]+$/ ? sprintf("  \033[38;5;%sm[%sp]\033[0m", dim, $6) : ""
+    draw(sprintf("%s %s%s  %s/s  ETA %s%s", spinner(), bar, have ? sprintf("%3d%%", pct) : human($2),
+      human($4), clock($5), tag))
+    next
+  }
+  $1 == "QOLM" { draw(sprintf("%s %s…", spinner(), $2 == "Merger" ? "merging video and audio" : "finishing (" $2 ")")); next }
+  $1 == "QOLF" {
+    clear()
+    path = $0
+    sub(/^QOLF [^ ]+ /, "", path)
+    n = split(path, parts, "/")
+    size = $2 ~ /^[0-9.]+$/ ? sprintf(" \033[38;5;%sm(%s)\033[0m", dim, human($2)) : ""
+    printf "\033[38;5;%sm✓\033[0m %s%s\n", ok, parts[n], size > "/dev/stderr"
+    next
+  }
+  { clear(); print > "/dev/stderr" }
+  END { clear() }
+' || rc=$?
+((rc == 0)) || ui_die "download failed (yt-dlp exit $rc)"
 ui_ok "Saved in $dest"

@@ -27,7 +27,7 @@
         cg = [ fd fzf bat eza chafa gnused ];
         ff = [ fd fzf bat eza chafa gnused ];
         ft = [ ripgrep fzf bat ];
-        dl = [ yt-dlp ffmpeg gum ];
+        dl = [ yt-dlp ffmpeg gum gawk coreutils ];
         pw = [ gum wl-clipboard coreutils ];
         up = [ curl gum wl-clipboard coreutils ];
         vault = [ age gnutar gum coreutils ];

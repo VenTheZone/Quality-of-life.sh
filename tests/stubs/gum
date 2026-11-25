@@ -5,6 +5,11 @@ case $1 in
   confirm) exit "${GUM_CONFIRM:-1}" ;; # 0 = yes; default no
   choose | input)
     var=GUM_${1^^}
+    if [[ $1 == choose && -n ${GUM_COUNT-} ]]; then # GUM_COUNT file set: the n-th choose answers GUM_CHOOSEn (n > 1)
+      n=$(($(cat "$GUM_COUNT" 2>/dev/null || echo 0) + 1))
+      echo "$n" >"$GUM_COUNT"
+      if ((n > 1)); then var=GUM_CHOOSE$n; fi
+    fi
     if [[ -z ${!var-} ]]; then
       echo "stub gum: $var not set" >&2
       exit 2
