@@ -19,11 +19,26 @@ eq "ui_die exits 1" "$rc" 1
 has "ui_die message" "$out" "boom"
 hasnt "ui_die stops" "$out" "after"
 
-printf -v want '\r\033[38;5;212mPass\033[0m %s%s  50%%' "$(printf '█%.0s' {1..15})" "$(printf '░%.0s' {1..15})"
+y=$'\033[38;2;243;230;0m' g=$'\033[38;2;138;138;153m' o=$'\033[0m'
+printf -v want '\r%sPass%s %s%s%s%s%s  50%%' "$y" "$o" "$y" "$(printf '█%.0s' {1..15})" "$g" "$(printf '░%.0s' {1..15})" "$o"
 eq "bar at 50%" "$(ui_bar 50 Pass 2>&1)" "$want"
 has "bar caps at 100%" "$(ui_bar 140 Pass 2>&1)" "100%"
 
 eq "sizes" "$(ui_size 1048576)" "1.0MB"
+
+eq "hex colour escape" "$(ui_fg '#02d7f2')" $'\033[38;2;2;215;242m'
+eq "bad colour: no escape" "$(ui_fg 'red')" ""
+run bash -c '. "$QOL_LIB"; ui_die "boom"'
+has "error tag in red" "$out" $'\033[38;2;255;0;60m[ERR] //\033[0m boom'
+run env QOL_ERR='#112233' bash -c '. "$QOL_LIB"; ui_die "boom"'
+has "QOL_ERR overrides" "$out" $'\033[38;2;17;34;51m[ERR]'
+has "ok tag" "$(ui_ok "done" 2>&1)" "[OK]"$'\033[0m done'
+run bash -c '. "$QOL_LIB"; ui_banner "test run"'
+has "banner name and subtitle" "$out" "▌"
+has "banner subtitle upper case" "$out" "TEST RUN"
+has "banner rule" "$out" "───"
+has "fzf frame label" "$FZF_DEFAULT_OPTS" "--border-label=\"▌"
+has "fzf colours after user options" "${FZF_DEFAULT_OPTS##*--color=}" "border:#f3e600"
 
 export FZF_PREVIEW_COLUMNS=40 FZF_PREVIEW_LINES=12
 touch "$T/pic.PNG" "$T/notes.txt"

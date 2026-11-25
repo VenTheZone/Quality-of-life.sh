@@ -6,7 +6,7 @@
 ui_need_tty
 # fzf's ripgrep recipe: fzf does no filtering (--disabled), rg reruns on every keystroke
 rg='rg --line-number --column --no-heading --color=always --smart-case --'
-fzf --ansi --disabled --prompt='text> ' --query "$*" \
+fzf --ansi --disabled --prompt='text >> ' --query "$*" \
   --bind "start:reload:$rg {q} || true" \
   --bind "change:reload:sleep 0.1; $rg {q} || true" \
   --delimiter : \

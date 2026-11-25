@@ -8,5 +8,5 @@ if [[ ${1-} == --preview ]]; then
   exit 0
 fi
 ui_need_tty
-fzf --multi --prompt='find> ' --scheme=path --ansi --query "$*" --preview "${0@Q} --preview {}" \
+fzf --multi --prompt='find >> ' --scheme=path --ansi --query "$*" --preview "${0@Q} --preview {}" \
   < <(fd --type f --hidden --exclude .git --color=always)

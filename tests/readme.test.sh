@@ -13,6 +13,6 @@ for f in "$SRC"/bin/* "$SRC/shell/cdg.zsh"; do
   has "README row for $name" "$readme" "| \`$name\` | $desc |"
   n=$((n + 1))
 done
-eq "no extra rows" "$(grep -c '^| `' "$SRC/README.md")" "$n"
+eq "no extra rows" "$(awk '/^## / { cmds = $0 == "## Commands" } cmds && /^\| `/' "$SRC/README.md" | wc -l)" "$n"
 
 finish

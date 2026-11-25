@@ -5,6 +5,7 @@
 
 [[ $# -eq 1 ]] || ui_die "usage: up <file | https://url>"
 ui_need_tty
+ui_banner "upload"
 if [[ $1 =~ ^https?:// ]]; then
   gum confirm --default=false "Shorten this URL with TinyURL? The short link is public." || ui_die "Cancelled"
   # --data-urlencode with a name= prefix sends the value as text, never as @file

@@ -70,6 +70,23 @@ Without Home Manager, `nix profile install github:VenTheZone/Quality-of-life.sh`
   home). A link to that domain or any subdomain of it saves in that folder; the first match wins.
 - `ft` opens a match as `$EDITOR +LINE -- FILE` (nvim when `$EDITOR` is unset).
 
+## Look
+
+Yellow frames, prompts and bars, cyan for the selection and anything moving, red for errors,
+`[OK]` and `[ERR] //` tags, and a `▌NAME // TASK` banner on the commands that run a task. fzf
+pickers get a sharp yellow frame labelled with the command's name; your own `FZF_DEFAULT_OPTS`
+still sets the layout. The colours are hex values you can change from the environment:
+
+| Variable | Default | Used for |
+|---|---|---|
+| `QOL_ACCENT` | `#f3e600` | frames, prompts, headers, bars |
+| `QOL_SELECT` | `#02d7f2` | selected row, cursor, spinner |
+| `QOL_OK` | `#00ff9f` | `[OK]` |
+| `QOL_ERR` | `#ff003c` | `[ERR]`, `//`, marks |
+| `QOL_DIM` | `#8a8a99` | secondary text |
+
+The terminal needs truecolor.
+
 ## Adding a command
 
 1. Add `bin/<name>`: line 1 `#!/usr/bin/env bash`, line 2 `# qol: <one-line description>`, then

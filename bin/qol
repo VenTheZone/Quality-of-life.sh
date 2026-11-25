@@ -9,7 +9,7 @@ if [[ ${1-} == --list || ! -t 1 ]]; then
   exit 0
 fi
 ui_need_tty
-pick=$(fzf --prompt='qol> ' --no-sort < <(awk -F '\t' '{ printf "%-10s %s\n", $1, $2 }' "$QOL_LIST"))
+pick=$(fzf --prompt='qol >> ' --no-sort < <(awk -F '\t' '{ printf "%-10s %s\n", $1, $2 }' "$QOL_LIST"))
 cmd=${pick%% *}
 if [[ $cmd == cdg ]]; then
   ui_ok "cdg changes your shell's folder, so it runs from the shell: type cdg"

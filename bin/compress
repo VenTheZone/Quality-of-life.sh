@@ -101,11 +101,12 @@ main() {
     return
   fi
   ui_need_tty
+  ui_banner "compress video"
   local in target mb
   if (($#)); then
     in=$1
   else
-    in=$(fzf --prompt='video> ' --scheme=path --preview "${0@Q} --preview {}" --preview-window=right,60% \
+    in=$(fzf --prompt='video >> ' --scheme=path --preview "${0@Q} --preview {}" --preview-window=right,60% \
       < <(fd --type f --max-depth 3 -e mp4 -e mkv -e mov -e webm -e avi -e m4v))
   fi
   [[ -f $in ]] || ui_die "no such file: $in"

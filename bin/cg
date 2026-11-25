@@ -8,6 +8,6 @@ if [[ ${1-} == --preview ]]; then
   exit 0
 fi
 ui_need_tty
-file=$(fzf --prompt='file> ' --scheme=path --ansi --query "$*" --preview "${0@Q} --preview {}" \
+file=$(fzf --prompt='file >> ' --scheme=path --ansi --query "$*" --preview "${0@Q} --preview {}" \
   < <(fd --type f --hidden --exclude .git --color=always))
 bat --paging=always -- "$file"
