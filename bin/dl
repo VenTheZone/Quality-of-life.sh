@@ -9,9 +9,30 @@ if [[ -z $url ]]; then url=$(gum input --placeholder "Video URL" --width=80); fi
 [[ $url =~ ^https?:// ]] || ui_die "not a URL: $url"
 mode=$(gum choose --header "Download" "Video" "Audio (opus)" "Audio (mp3)")
 args=(--restrict-filenames -o '%(title)s [%(id)s].%(ext)s')
+# Optional routes file: "<domain> <folder>" per line; a link to that domain or a subdomain of it
+# saves in the folder. Anything else saves in the current folder.
+host=${url#*://}
+host=${host%%[/?#]*}
+host=${host##*@}
+host=${host%%:*}
+host=${host,,}
+dest=$PWD
+routes=${XDG_CONFIG_HOME:-$HOME/.config}/qol/dl-routes
+if [[ -r $routes ]]; then
+  while read -r domain dir; do
+    [[ -z $domain || $domain == \#* || -z $dir ]] && continue
+    domain=${domain,,}
+    if [[ $host == "$domain" || $host == *".$domain" ]]; then
+      dest=${dir/#\~/$HOME}
+      break
+    fi
+  done <"$routes"
+fi
+mkdir -p -- "$dest"
+args+=(-P "$dest")
 case $mode in
   "Audio (opus)") args+=(-x --audio-format opus) ;;
   "Audio (mp3)") args+=(-x --audio-format mp3 --audio-quality 0) ;;
 esac
 yt-dlp "${args[@]}" -- "$url"
-ui_ok "Saved in $PWD"
+ui_ok "Saved in $dest"

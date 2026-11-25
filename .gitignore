@@ -1,2 +1,4 @@
 /result
 /result-*
+# a local dl routes file (see README); keep it out of git
+dl-routes
